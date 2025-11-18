@@ -65,10 +65,12 @@ def check_int(object: str,  cur_funk, range = None):
         exit_mod(IncorrectInput, cur_funk)
 
 def clear():
-    make_log('Консоль очищена') 
-    try:
-        os.system('cls')
-    except:
+    make_log('Консоль очищена')
+    platform = os.name
+    print(platform)
+    if platform == 'nt':
+        os.system('clear')
+    elif platform == 'posix':
         os.system('clear')
 
 def choose_page_type(url=default_values.get('CONST_URL')):
