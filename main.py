@@ -35,10 +35,9 @@ class SillyException(Exception):
             super().__init__(self.message)
 
 class IncorrectInput(Exception):
-    def __init__(self, *args):
-        super().__init__(*args)
-    def __str__(self):
-        return 'Неверный ввод. Попробуй снова.'
+    def __init__(self, message = 'Неверный ввод. Попробуй снова.'):
+        self.message = message
+        super().__init__(self.message)
 
 class MyValueError(Exception):
         def __init__(self, message='Введено неправильное значение. Попробуйте снова'):
@@ -216,7 +215,7 @@ def choose_parameter(url = default_values.get('CONST_URL'), page_type=default_va
 *   При некорректном вводе или выборе недоступной опции вызывает функцию `exit_mod` или перезапускает себя для повторного ввода.
 *   При вызове записывает в лог сообщение о переключении на страницу выбора параметра.
 """
-        
+    
     make_log('Переключено на страницу выбора параметра')
     print('По какому параметру хотите начать поиск?')
     match page_type:
@@ -238,10 +237,10 @@ def choose_parameter(url = default_values.get('CONST_URL'), page_type=default_va
                     url += id
                 case '3':
                     exit_mod(TemporaryUnavailable, choose_parameter)
+                    choose_parameter()
                     print('Начинаю поиск по заголовку')
-                    string_search()
                 case _:
-                    exit_mod(IncorrectInput, choose_parameter)
+                    exit_mod(e=IncorrectInput, funk_to_go=choose_parameter)
         
         case 'comments': # Поиск в комментариях 
             print('1 - Поиск по ID поста')
@@ -290,6 +289,7 @@ def choose_parameter(url = default_values.get('CONST_URL'), page_type=default_va
                     print('\nНекорректный ввод. Попробуйте снова')
                     clear()
                     choose_parameter(url=default_values.get('CONST_URL') + 'users', page_type=page_type)
+    
     default_values['url'] = url
 
 def make_request(url=default_values.get('url'), page_type=default_values.get('page_type')):
@@ -319,7 +319,7 @@ def make_request(url=default_values.get('url'), page_type=default_values.get('pa
 *   Перехватывает и логирует непредвиденные исключения, которые могут возникнуть во время сетевого запроса или парсинга JSON.
 *   В случае получения пустого списка в ответе, информирует пользователя об ошибке и перезапускает главный цикл приложения (`main()`).
 """
-    
+    make_log('Начинаю запрос')
     try:
         responce = requests.get(url=url)
         status_code = responce.status_code
@@ -344,6 +344,7 @@ def make_request(url=default_values.get('url'), page_type=default_values.get('pa
         make_log(f'Текст ошибки: {e}')
 
     try:
+        if url[-1] == '/': raise IncorrectInput('Неверная ссылка. Попробуй снова.')
         answers = responce.json()
         if isinstance(answers, list):
             if len(answers) != 0:
@@ -460,7 +461,7 @@ def exit_mod(e = SillyException, funk_to_go = None, isException = True):
             make_log(e)
             sleep(3)
             if funk_to_go is not None:
-                funk_to_go()
+                funk_to_go
 
     else:
         if e is not None:
